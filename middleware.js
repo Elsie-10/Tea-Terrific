@@ -6,10 +6,17 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
-    // Protect /admin/* except /admin/login
-    if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-      if (!token || token.role !== "admin") {
-        return NextResponse.redirect(new URL("/admin/login", req.url));
+    // Owner-only routes
+    if (pathname.startsWith("/owner") || pathname.startsWith("/admin")) {
+      if (!token || token.role !== "owner") {
+        return NextResponse.redirect(new URL("/auth/login", req.url));
+      }
+    }
+
+    // Customer-only routes (must be logged in)
+    if (pathname.startsWith("/checkout")) {
+      if (!token) {
+        return NextResponse.redirect(new URL(`/auth/login?callbackUrl=${pathname}`, req.url));
       }
     }
 
@@ -19,8 +26,8 @@ export default withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
-        if (pathname.startsWith("/admin/login")) return true;
-        if (pathname.startsWith("/admin")) return !!token;
+        if (pathname.startsWith("/owner") || pathname.startsWith("/admin")) return !!token;
+        if (pathname.startsWith("/checkout")) return !!token;
         return true;
       },
     },
@@ -28,5 +35,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/owner/:path*", "/admin/:path*", "/checkout"],
 };

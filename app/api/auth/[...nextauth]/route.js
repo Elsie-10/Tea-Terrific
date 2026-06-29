@@ -1,52 +1,32 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 
-export const authOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+export async function POST(request) {
+  try {
+    await connectDB();
+    const { name, email, password, phone } = await request.json();
 
-        await connectDB();
-        const user = await User.findOne({ email: credentials.email.toLowerCase() });
-        if (!user) return null;
+    if (!name || !email || !password) {
+      return NextResponse.json({ success: false, error: "Name, email and password are required." }, { status: 400 });
+    }
+    if (password.length < 6) {
+      return NextResponse.json({ success: false, error: "Password must be at least 6 characters." }, { status: 400 });
+    }
 
-        const isValid = await user.comparePassword(credentials.password);
-        if (!isValid) return null;
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return NextResponse.json({ success: false, error: "An account with this email already exists." }, { status: 409 });
+    }
 
-        return { id: user._id.toString(), email: user.email, name: user.name, role: user.role };
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.role = token.role;
-        session.user.id = token.id;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/admin/login",
-  },
-  session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET,
-};
+    // All self-registrations are customers. The owner account is created via seed script.
+    const user = await User.create({ name, email, password, phone: phone || "", role: "customer" });
 
-const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+    return NextResponse.json(
+      { success: true, data: { id: user._id, name: user.name, email: user.email, role: user.role } },
+      { status: 201 }
+    );
+  } catch (err) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
