@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   ShoppingBag, Clock, ChefHat, CheckCircle, TrendingUp, LogOut, RefreshCw,
 } from "lucide-react";
-import OrderTable from "@/components/admin/OrderTable";
+import OrderTable from "@/components/owner/OrderTable";
 
-export default function AdminDashboard() {
+export default function OwnerDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -18,13 +18,14 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/admin/login");
-  }, [status, router]);
+    if (status === "unauthenticated") router.push("/auth/login");
+    else if (status === "authenticated" && session?.user?.role !== "owner") router.push("/");
+  }, [status, session, router]);
 
   const fetchData = async () => {
     setLoading(true);
     const [statsRes, ordersRes] = await Promise.all([
-      fetch("/api/admin/stats"),
+      fetch("/api/owner/stats"),
       fetch(filter === "All" ? "/api/orders" : `/api/orders?status=${filter}`),
     ]);
     const [statsData, ordersData] = await Promise.all([statsRes.json(), ordersRes.json()]);
@@ -33,7 +34,7 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [filter]);
+  useEffect(() => { if (session?.user?.role === "owner") fetchData(); }, [filter, session]);
 
   const updateOrderStatus = async (orderId, orderStatus) => {
     const res = await fetch(`/api/orders/${orderId}`, {
@@ -44,28 +45,27 @@ export default function AdminDashboard() {
     if (res.ok) fetchData();
   };
 
-  if (status === "loading" || !session) return null;
+  if (status === "loading" || !session || session.user.role !== "owner") return null;
 
   const statCards = [
     { label: "Total Orders", value: stats?.totalOrders ?? "—", icon: ShoppingBag, color: "bg-[#6B3F1F]" },
     { label: "Pending", value: stats?.pendingOrders ?? "—", icon: Clock, color: "bg-yellow-500" },
     { label: "Preparing", value: stats?.preparingOrders ?? "—", icon: ChefHat, color: "bg-blue-500" },
     { label: "Completed", value: stats?.completedOrders ?? "—", icon: CheckCircle, color: "bg-[#4A7C59]" },
-    { label: "Revenue (KES)", value: stats?.totalRevenue?.toLocaleString() ?? "—", icon: TrendingUp, color: "bg-[#D4A843]" },
+    { label: "Revenue (Ksh)", value: stats?.totalRevenue?.toLocaleString() ?? "—", icon: TrendingUp, color: "bg-[#D4A843]" },
   ];
 
   return (
     <div className="min-h-screen bg-[#FDF8F0]">
-      {/* Admin header */}
       <header className="bg-[#6B3F1F] text-white px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="font-serif text-xl font-bold">Tea-Terrific</h1>
-          <p className="text-[#F2E0D0] text-xs">Admin Dashboard</p>
+          <p className="text-[#F2E0D0] text-xs">Owner Dashboard</p>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-[#F2E0D0] hidden sm:block">{session.user.email}</span>
           <button
-            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="flex items-center gap-1 text-sm text-[#F2E0D0] hover:text-white transition"
           >
             <LogOut className="w-4 h-4" />
@@ -75,7 +75,6 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
           {statCards.map(({ label, value, icon: Icon, color }) => (
             <div key={label} className="card p-5">
@@ -88,7 +87,6 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* Orders section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h2 className="font-serif text-2xl font-bold text-[#2C2C2C]">Orders</h2>
           <div className="flex items-center gap-3 flex-wrap">

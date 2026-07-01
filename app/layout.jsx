@@ -3,8 +3,19 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import SessionWrapper from "@/components/SessionWrapper";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-playfair",
+  display: "swap",
+});
 
 export const metadata = {
   title: "Tea-Terrific Bakery",

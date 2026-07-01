@@ -69,7 +69,7 @@ export default function HomePage() {
           <div id="menu" className="overflow-hidden rounded-[2rem] border border-[#D4A843]/40 shadow-xl">
             <Image
               src="/images/Backery0.jpeg"
-              alt="Tea-Terrific bakery menu"
+              alt="Tea-rific bakery menu"
               width={1200}
               height={800}
               priority

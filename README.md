@@ -57,6 +57,18 @@ tea-terrific/
 
 ---
 
+## Prerequisites
+
+You need Node.js installed to use npm. npm is bundled with Node.js, so you do not install it separately.
+
+If you use nvm, this project already includes a Node version file:
+```bash
+nvm install
+nvm use
+```
+
+If you do not use nvm, install the latest LTS version of Node.js from https://nodejs.org/.
+
 ## Quick Start
 
 ### 1. Install dependencies

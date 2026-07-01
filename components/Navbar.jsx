@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ShoppingCart, Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -26,7 +28,7 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold font-serif text-[#6B3F1F]">Tea-Terrific</span>
+          <span className="text-2xl font-bold font-serif text-[#6B3F1F]">Tea-rific</span>
           <span className="text-xs text-[#4A7C59] font-medium hidden sm:block tracking-widest uppercase">Bakery</span>
         </Link>
 
