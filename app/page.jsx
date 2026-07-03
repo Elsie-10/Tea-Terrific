@@ -64,7 +64,7 @@ const FALLBACK_PRODUCTS = [
     name: "Berry Cupcakes",
     price: 800,
     description: "Moist cupcakes with a sweet berry finish.",
-    image: "/images/Backery3.jpeg",
+    image: "/images/cupcake1a.jpeg",
     category: "Cupcake",
     featured: true,
     options: ["Berry", "Caramel"],

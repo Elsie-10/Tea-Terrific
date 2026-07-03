@@ -28,7 +28,7 @@ export default function ProductCard({ product }) {
   const DEFAULT_CATEGORY_IMAGES = {
     Cake: "/images/Backery1.jpeg",
     Loaf: "/images/cakes.jpeg",
-    Cupcake: "/images/Backery3.jpeg",
+    Cupcake: "/images/cupcake1a.jpeg",
     Cookie: "/images/cookies.jpeg",
     Special: "/images/Youghut.jpeg",
     Other: "/images/placeholder.jpg",

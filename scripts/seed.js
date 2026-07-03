@@ -80,7 +80,7 @@ const PRODUCTS = [
     price: 1800,
     category: "Cupcake",
     featured: true,
-    image: "/images/Backery3.jpeg",
+    image: "/images/cupcake1a.jpeg",
     description: "A dozen (12 pieces) of butter cream frosted cupcakes. Perfect for birthdays, events, or a sweet treat for the whole team.",
     options: [],
   },
