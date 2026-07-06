@@ -1,44 +1,31 @@
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { supabaseAdmin } from "@/lib/supabase";
 import bcrypt from "bcryptjs";
-import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
 
 export const authOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
-  trustHost: true,
-  session: { strategy: "jwt" },
   providers: [
-    Credentials({
-      name: "Credentials",
+    CredentialsProvider({
+      name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required.");
-        }
+        if (!credentials?.email || !credentials?.password) return null;
 
-        await connectDB();
-        const user = await User.findOne({ email: credentials.email.toLowerCase().trim() }).lean();
+        const { data: user, error } = await supabaseAdmin
+          .from("users")
+          .select("id, name, email, password, role, phone")
+          .eq("email", credentials.email.toLowerCase())
+          .maybeSingle();
 
-        if (!user) {
-          throw new Error("No account found with that email.");
-        }
+        if (error || !user) return null;
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
-        if (!isValid) {
-          throw new Error("Invalid password.");
-        }
+        const valid = await bcrypt.compare(credentials.password, user.password);
+        if (!valid) return null;
 
-        return {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          phone: user.phone || "",
-        };
+        return { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone };
       },
     }),
   ],
@@ -47,19 +34,23 @@ export const authOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.phone = user.phone;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
+      if (token) {
         session.user.role = token.role;
+        session.user.id = token.id;
+        session.user.phone = token.phone;
       }
       return session;
     },
   },
+  pages: { signIn: "/auth/login" },
+  session: { strategy: "jwt" },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };

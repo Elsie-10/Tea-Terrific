@@ -11,10 +11,10 @@
     "seed": "node scripts/seed.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.43.0",
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "mongoose": "^8.4.0",
     "next-auth": "^4.24.7",
     "bcryptjs": "^2.4.3",
     "lucide-react": "^0.383.0"

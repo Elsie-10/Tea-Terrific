@@ -1,46 +1,31 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import Product from "@/models/Product";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(_, { params }) {
-  try {
-    await connectDB();
-    const product = await Product.findById(params.id);
-    if (!product) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
-    return NextResponse.json({ success: true, data: product });
-  } catch (err) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
-  }
+  const { data, error } = await supabase.from("products").select("*").eq("id", params.id).single();
+  if (error) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function PUT(request, { params }) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !["admin", "owner"].includes(session.user.role)) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    await connectDB();
-    const body = await request.json();
-    const product = await Product.findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
-    if (!product) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
-    return NextResponse.json({ success: true, data: product });
-  } catch (err) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "owner") {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
+  const body = await request.json();
+  const { data, error } = await supabaseAdmin.from("products").update(body).eq("id", params.id).select().single();
+  if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function DELETE(_, { params }) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !["admin", "owner"].includes(session.user.role)) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-    await connectDB();
-    await Product.findByIdAndDelete(params.id);
-    return NextResponse.json({ success: true, message: "Product deleted" });
-  } catch (err) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "owner") {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
+  const { error } = await supabaseAdmin.from("products").delete().eq("id", params.id);
+  if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true, message: "Product deleted" });
 }

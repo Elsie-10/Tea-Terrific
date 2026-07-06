@@ -1,36 +1,34 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import Order from "@/models/Order";
+import { supabaseAdmin } from "@/lib/supabase";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-// GET /api/admin/stats
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !["admin", "owner"].includes(session.user.role)) {
+    if (!session || session.user.role !== "owner") {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
+    const [total, pending, preparing, completed, revenue] = await Promise.all([
+      supabaseAdmin.from("orders").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("order_status", "Pending"),
+      supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("order_status", "Preparing"),
+      supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("order_status", "Completed"),
+      supabaseAdmin.from("orders").select("total").eq("payment_status", "Paid"),
+    ]);
 
-    const [totalOrders, pendingOrders, preparingOrders, completedOrders, revenueResult] =
-      await Promise.all([
-        Order.countDocuments(),
-        Order.countDocuments({ orderStatus: "Pending" }),
-        Order.countDocuments({ orderStatus: "Preparing" }),
-        Order.countDocuments({ orderStatus: "Completed" }),
-        Order.aggregate([
-          { $match: { paymentStatus: "Paid" } },
-          { $group: { _id: null, total: { $sum: "$total" } } },
-        ]),
-      ]);
-
-    const totalRevenue = revenueResult[0]?.total || 0;
+    const totalRevenue = (revenue.data || []).reduce((sum, o) => sum + Number(o.total), 0);
 
     return NextResponse.json({
       success: true,
-      data: { totalOrders, pendingOrders, preparingOrders, completedOrders, totalRevenue },
+      data: {
+        totalOrders: total.count || 0,
+        pendingOrders: pending.count || 0,
+        preparingOrders: preparing.count || 0,
+        completedOrders: completed.count || 0,
+        totalRevenue,
+      },
     });
   } catch (err) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

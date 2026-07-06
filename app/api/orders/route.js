@@ -1,30 +1,42 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import Order from "@/models/Order";
+import { supabaseAdmin } from "@/lib/supabase";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-// POST /api/orders — public (customer places order)
 export async function POST(request) {
   try {
-    await connectDB();
-    const body = await request.json();
-    const { customerName, phone, location, items, total } = body;
-
-    // Basic validation
+    const { customerName, phone, location, items, total, userId } = await request.json();
     if (!customerName || !phone || !location || !items?.length || !total) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
-    const order = await Order.create({
-      customerName: customerName.trim(),
-      phone: phone.trim(),
-      location: location.trim(),
-      items,
-      total,
-      paymentStatus: "Pending",
-      orderStatus: "Pending",
-    });
+    const { data: order, error: orderErr } = await supabaseAdmin
+      .from("orders")
+      .insert({
+        customer_name: customerName.trim(),
+        phone: phone.trim(),
+        location: location.trim(),
+        total,
+        user_id: userId || null,
+        payment_status: "Pending",
+        order_status: "Pending",
+      })
+      .select()
+      .single();
+
+    if (orderErr) throw new Error(orderErr.message);
+
+    const { error: itemsErr } = await supabaseAdmin.from("order_items").insert(
+      items.map((i) => ({
+        order_id: order.id,
+        product_id: i.productId || null,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+        image: i.image || null,
+      }))
+    );
+    if (itemsErr) throw new Error(itemsErr.message);
 
     return NextResponse.json({ success: true, data: order }, { status: 201 });
   } catch (err) {
@@ -32,35 +44,34 @@ export async function POST(request) {
   }
 }
 
-// GET /api/orders — admin only
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !["admin", "owner"].includes(session.user.role)) {
+    if (!session || session.user.role !== "owner") {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
+    const from = (page - 1) * limit;
 
-    const query = {};
-    if (status) query.orderStatus = status;
+    let query = supabaseAdmin
+      .from("orders")
+      .select("*, order_items(*)", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, from + limit - 1);
 
-    const [orders, total] = await Promise.all([
-      Order.find(query)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      Order.countDocuments(query),
-    ]);
+    if (status) query = query.eq("order_status", status);
+
+    const { data, error, count } = await query;
+    if (error) throw new Error(error.message);
 
     return NextResponse.json({
       success: true,
-      data: orders,
-      pagination: { total, page, limit, pages: Math.ceil(total / limit) },
+      data,
+      pagination: { total: count || 0, page, limit, pages: Math.ceil((count || 0) / limit) },
     });
   } catch (err) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

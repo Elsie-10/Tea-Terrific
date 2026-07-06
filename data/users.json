@@ -1,0 +1,32 @@
+[
+  {
+    "_id": "1783320666364-4a657ee36edc9",
+    "name": "Local Tester",
+    "email": "local@test.com",
+    "password": "$2a$12$/OWUO44NwRvm8lGee6aoBOvStqpUTYYsS26n8z7ZDZlXwDTgkyDwW",
+    "role": "customer",
+    "phone": "0700000000",
+    "createdAt": "2026-07-06T06:51:06.364Z",
+    "updatedAt": "2026-07-06T06:51:07.306Z"
+  },
+  {
+    "_id": "1783321898984-b86fb823c07e8",
+    "name": "Elsie Oscar",
+    "email": "elsieoscar06@gmail.com",
+    "password": "$2a$12$p0TTtYARLh8gHUDSOr8L.uQ446TOyP3d21xwFEjYPwImBWS2Zkkma",
+    "role": "customer",
+    "phone": "0762020231",
+    "createdAt": "2026-07-06T07:11:38.984Z",
+    "updatedAt": "2026-07-06T07:11:38.984Z"
+  },
+  {
+    "_id": "1783322226747-c9c2fd1d58704",
+    "name": "John doe",
+    "email": "johndoe@gmail.com",
+    "password": "$2a$12$ujZ9ayOnQo743OZ4qyLuUuHGI2WSnX2deQFWZm3Yo/AJrBUkrJqdi",
+    "role": "customer",
+    "phone": "01234567",
+    "createdAt": "2026-07-06T07:17:06.747Z",
+    "updatedAt": "2026-07-06T07:17:06.747Z"
+  }
+]

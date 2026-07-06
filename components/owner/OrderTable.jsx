@@ -37,37 +37,36 @@ export default function OrderTable({ orders, onStatusUpdate, loading }) {
         </thead>
         <tbody>
           {orders.map((order) => (
-            <tr key={order._id} className="border-b border-[#F2E0D0] hover:bg-[#FDF8F0] transition">
-              <td className="px-4 py-3 font-semibold text-[#2C2C2C]">{order.customerName}</td>
+            <tr key={order.id} className="border-b border-[#F2E0D0] hover:bg-[#FDF8F0] transition">
+              <td className="px-4 py-3 font-semibold text-[#2C2C2C]">{order.customer_name}</td>
               <td className="px-4 py-3 text-gray-600">{order.phone}</td>
               <td className="px-4 py-3 text-gray-600">{order.location}</td>
               <td className="px-4 py-3 text-gray-600">
-                {order.items?.map((i) => (
-                  <span key={i.productId} className="block text-xs">
+                {order.order_items?.map((i) => (
+                  <span key={i.id} className="block text-xs">
                     {i.quantity}× {i.name}
                   </span>
                 ))}
               </td>
               <td className="px-4 py-3 text-right font-semibold text-[#6B3F1F]">
-                KES {order.total?.toLocaleString()}
+                KES {Number(order.total).toLocaleString()}
               </td>
               <td className="px-4 py-3">
                 <span className={`status-badge ${
-                  order.paymentStatus === "Paid"
+                  order.payment_status === "Paid"
                     ? "bg-green-100 text-green-800"
-                    : order.paymentStatus === "Failed"
+                    : order.payment_status === "Failed"
                     ? "bg-red-100 text-red-700"
                     : "bg-yellow-100 text-yellow-800"
                 }`}>
-                  {order.paymentStatus}
+                  {order.payment_status}
                 </span>
               </td>
               <td className="px-4 py-3">
                 <select
-                  value={order.orderStatus}
-                  onChange={(e) => onStatusUpdate(order._id, e.target.value)}
-                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white
-                             focus:outline-none focus:ring-2 focus:ring-[#D4A843] cursor-pointer"
+                  value={order.order_status}
+                  onChange={(e) => onStatusUpdate(order.id, e.target.value)}
+                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-[#D4A843] cursor-pointer"
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -75,7 +74,7 @@ export default function OrderTable({ orders, onStatusUpdate, loading }) {
                 </select>
               </td>
               <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
-                {new Date(order.createdAt).toLocaleDateString("en-KE", {
+                {new Date(order.created_at).toLocaleDateString("en-KE", {
                   day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
                 })}
               </td>

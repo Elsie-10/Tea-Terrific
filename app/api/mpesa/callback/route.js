@@ -1,43 +1,33 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import Order from "@/models/Order";
+import { supabaseAdmin } from "@/lib/supabase";
 
-// POST /api/mpesa/callback — called by Safaricom servers
 export async function POST(request) {
   try {
-    await connectDB();
     const body = await request.json();
     const callback = body?.Body?.stkCallback;
-
-    if (!callback) {
-      return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
-    }
+    if (!callback) return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
 
     const { CheckoutRequestID, ResultCode, CallbackMetadata } = callback;
 
-    const order = await Order.findOne({ checkoutRequestId: CheckoutRequestID });
-    if (!order) {
-      return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
-    }
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id")
+      .eq("checkout_request_id", CheckoutRequestID)
+      .maybeSingle();
+
+    if (!order) return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
 
     if (ResultCode === 0) {
-      // Payment successful — extract metadata
       const meta = {};
-      CallbackMetadata?.Item?.forEach((item) => {
-        meta[item.Name] = item.Value;
-      });
-
-      await Order.findByIdAndUpdate(order._id, {
-        paymentStatus: "Paid",
-        orderStatus: "Preparing",
-        mpesaReceiptNumber: meta.MpesaReceiptNumber,
-        mpesaTransactionId: meta.TransactionDate?.toString(),
-      });
+      CallbackMetadata?.Item?.forEach((item) => { meta[item.Name] = item.Value; });
+      await supabaseAdmin.from("orders").update({
+        payment_status: "Paid",
+        order_status: "Preparing",
+        mpesa_receipt_number: meta.MpesaReceiptNumber || null,
+        mpesa_transaction_id: meta.TransactionDate?.toString() || null,
+      }).eq("id", order.id);
     } else {
-      // Payment failed
-      await Order.findByIdAndUpdate(order._id, {
-        paymentStatus: "Failed",
-      });
+      await supabaseAdmin.from("orders").update({ payment_status: "Failed" }).eq("id", order.id);
     }
 
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
