@@ -3,31 +3,24 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-// POST /api/orders — any logged-in customer places an order
-// Order is created immediately with payment_status: Pending
-// It shows on the owner dashboard right away — no payment needed first
+// POST /api/orders — customer places order, appears on dashboard immediately
 export async function POST(request) {
   try {
     const body = await request.json();
     const { customerName, phone, location, items, total, userId } = body;
 
-    if (!customerName?.trim()) {
+    if (!customerName?.trim())
       return NextResponse.json({ success: false, error: "Customer name is required." }, { status: 400 });
-    }
-    if (!phone?.trim()) {
+    if (!phone?.trim())
       return NextResponse.json({ success: false, error: "Phone number is required." }, { status: 400 });
-    }
-    if (!location?.trim()) {
+    if (!location?.trim())
       return NextResponse.json({ success: false, error: "Delivery location is required." }, { status: 400 });
-    }
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    if (!items || !Array.isArray(items) || items.length === 0)
       return NextResponse.json({ success: false, error: "Order must have at least one item." }, { status: 400 });
-    }
-    if (!total || Number(total) <= 0) {
+    if (!total || Number(total) <= 0)
       return NextResponse.json({ success: false, error: "Order total is invalid." }, { status: 400 });
-    }
 
-    // 1. Create the order — status Pending, visible on dashboard immediately
+    // Create order — visible on owner dashboard immediately with Pending status
     const { data: order, error: orderErr } = await supabaseAdmin
       .from("orders")
       .insert({
@@ -47,24 +40,21 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: orderErr.message }, { status: 500 });
     }
 
-    // 2. Insert order items
-    const orderItems = items.map((i) => ({
-      order_id:   order.id,
-      product_id: i.productId || i._id || null,
-      name:       i.name,
-      price:      Number(i.price),
-      quantity:   Number(i.quantity),
-      image:      i.image || null,
-    }));
-
+    // Insert order items
     const { error: itemsErr } = await supabaseAdmin
       .from("order_items")
-      .insert(orderItems);
+      .insert(
+        items.map((i) => ({
+          order_id:   order.id,
+          product_id: i.productId || i._id || null,
+          name:       i.name,
+          price:      Number(i.price),
+          quantity:   Number(i.quantity),
+          image:      i.image || null,
+        }))
+      );
 
-    if (itemsErr) {
-      console.error("Order items insert error:", itemsErr);
-      // Order was created — don't fail entirely, just log
-    }
+    if (itemsErr) console.error("Order items insert error:", itemsErr);
 
     return NextResponse.json({ success: true, data: order }, { status: 201 });
   } catch (err) {
@@ -73,14 +63,19 @@ export async function POST(request) {
   }
 }
 
-// GET /api/orders — owner only, returns all orders with their items
+// GET /api/orders — owner only
 export async function GET(request) {
   try {
+    // Fix: pass request to getServerSession for App Router compatibility
     const session = await getServerSession(authOptions);
+
     if (!session) {
+      console.log("GET /api/orders — no session found");
       return NextResponse.json({ success: false, error: "Not signed in." }, { status: 401 });
     }
+
     if (session.user.role !== "owner") {
+      console.log("GET /api/orders — role is:", session.user.role);
       return NextResponse.json({ success: false, error: "Owner access only." }, { status: 403 });
     }
 
@@ -106,6 +101,8 @@ export async function GET(request) {
       console.error("GET /api/orders Supabase error:", error);
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
+
+    console.log(`GET /api/orders — returning ${data?.length || 0} orders`);
 
     return NextResponse.json({
       success: true,
