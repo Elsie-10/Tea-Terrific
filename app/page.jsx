@@ -136,17 +136,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("All");
 
-useEffect(() => {
+ useEffect(() => {
   setProducts(FALLBACK_PRODUCTS);
   setLoading(false);
 }, []);
-
-    loadProducts();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const visible = activeTab === "All"
     ? products
