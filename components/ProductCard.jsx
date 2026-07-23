@@ -14,8 +14,8 @@ const CONFIGURABLE = ["Cake", "Loaf", "Special", "Cookie", "Cupcake"];
 const NAME_TO_IMAGE = {
   // Cakes
   "cake – 1 kg":               "/images/cake.jpeg",
-  "cake – 1½ kg":              "/images/cake2.jpeg",
-  "cake – 2 kg":               "/images/cake4.jpeg",
+  "1½ kgcake ":              "/images/celebrationcake1.jpeg",
+  " 2kg cake ":               "/images/cake4.jpeg",
   // Loaves
   "single loaf":               "/images/loaf1a.jpeg",
   "double loaf":               "/images/loafa.jpeg",
@@ -26,22 +26,23 @@ const NAME_TO_IMAGE = {
   "cookies - ginger":      "/images/cookies.jpeg",
   // Specials
   "fruit cake":                "/images/fruitcake.jpeg",
-  "large celebration cake":    "/images/celebrationcake1.jpeg",
+  "large celebration cake":    "/images/celebrationcake3c.jpeg",
 };
 
 const CATEGORY_FALLBACK = {
   Cake:    "/images/cake.jpeg",
   Loaf:    "/images/loaf1a.jpeg",
+  Yoghuts: "/images/yoghut.jpeg",
   Cupcake: "/images/cupcake1a.jpeg",
   Cookie:  "/images/cookies.jpeg",
-  Special: "/images/celebrationcake1.jpeg",
+  Special: "/images/celebrationcake3c.jpeg",
 };
 
 function pickImage(product) {
   const key = (product.name || "").toLowerCase().trim();
   if (NAME_TO_IMAGE[key]) return NAME_TO_IMAGE[key];
   if (key.includes("fruit"))        return "/images/fruitcake.jpeg";
-  if (key.includes("celebration"))  return "/images/celebrationcake1.jpeg";
+  if (key.includes("celebration"))  return "/images/celebrationcake3c.jpeg";
   return CATEGORY_FALLBACK[product.category] || "/images/placeholder.jpg";
 }
 
@@ -49,22 +50,16 @@ function pickImage(product) {
 const CARD_BLURB = {
   Cake:    "Choose flavour, size & optional fruit filling. SMBC frosting on every cake.",
   Loaf:    "Choose from 5 flavours in single or double size.",
+  Yoghuts: "Fresh sweetened or unsweetened yoghurt. Ksh 500 per litre.",
   Cupcake: "Butter cream frosted cupcakes — order by the dozen.",
   Cookie:  "Chocolate chip or ginger — full batch, baked fresh.",
   Special: "4 Kg · Serves 70+ · Tell us exactly what you need.",
 };
 
-const CARD_PRICE = {
-  Cake:    "From Ksh 4,000",
-  Loaf:    "From Ksh 1,500",
-  Cupcake: "Ksh 1,800 / dozen",
-  Cookie:  "Ksh 1,800 / batch",
-  Special: "Ksh 9,000",
-};
 
 export default function ProductCard({ product, onConfigure }) {
   const [imgErr, setImgErr] = useState(false);
-  const imageSrc = imgErr ? "/images/placeholder.jpg" : pickImage(product);
+  const imageSrc = imgErr? "/images/placeholder.jpg": product.image || pickImage(product);
   const isConfigurable = CONFIGURABLE.includes(product.category);
 
   return (
@@ -105,7 +100,7 @@ export default function ProductCard({ product, onConfigure }) {
 
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-[#F2E0D0]">
           <span className="text-[#6B3F1F] font-bold text-sm">
-            {CARD_PRICE[product.category] || `Ksh ${Number(product.price).toLocaleString()}`}
+             Ksh {Number(product.price).toLocaleString()}
           </span>
           {isConfigurable ? (
             <button
