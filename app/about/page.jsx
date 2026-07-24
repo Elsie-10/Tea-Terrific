@@ -89,7 +89,7 @@ export default function AboutPage() {
           <h1 className="font-serif text-5xl md:text-6xl font-bold mb-6 leading-tight">The Tea-Terrific Story</h1>
           <p className="text-[#F2E0D0] text-lg leading-relaxed">
             Tea-Terrific started in a small Nairobi kitchen with one big dream — to turn ordinary days into something worth celebrating.
-            What began as a deep love for mixing, frosting, and sharing has grown into a home bakery that families and friends across Nairobi
+            What began as a deep love for mixing, frosting, and sharing has grown into a home bakery that families and friends across Nairobi, Thika
             trust for their biggest and most personal moments.
           </p>
           <p className="text-[#F2E0D0] text-lg leading-relaxed mt-4">
