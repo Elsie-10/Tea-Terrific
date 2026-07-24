@@ -23,7 +23,6 @@ const CARD_BLURB = {
   Yoghuts:  "Fresh and creamy. Sweetened or unsweetened. Ksh 500 per litre.",
   Cupcakes: "Butter cream frosted cupcakes — order by the dozen.",
   Cookies:  "Chocolate chip or ginger — full batch, baked fresh.",
-  Specials: "4 Kg · Serves 70+ · Tell us exactly what you need.",
 };
 
 // ── Fallback image per category ───────────────────────────────
@@ -67,7 +66,12 @@ export default function ProductCard({ product, onConfigure }) {
   const handleClick = () => {
     if (isConfigurable) onConfigure(product);
   };
-
+  const blurb =
+   product.category === "Specials"
+    ? product.name.toLowerCase().includes("fruit")
+      ? "Rich fruit cake made with premium dried fruits. Perfect for gifting and celebrations."
+      : "4 Kg · Serves 70+ people · Perfect for weddings, birthdays & large celebrations."
+    : CARD_BLURB[product.category];
   return (
     <div
       className={`card group hover:shadow-lg transition-all duration-200 flex flex-col
@@ -103,7 +107,7 @@ export default function ProductCard({ product, onConfigure }) {
           {product.name}
         </h3>
         <p className="text-gray-400 text-xs mb-3 flex-1 leading-relaxed">
-          {CARD_BLURB[product.category] || product.description}
+          <p>{blurb}</p>
         </p>
 
         {/* Options chips — for yoghut and cookies */}
